@@ -1,14 +1,15 @@
-yntax = "proto3";
+syntax = "proto3";
 
 package login;
 
 //Login Mesage, 1 ~ 1000
 
 enum LoginMsgID{
+    CS_CMD_NONE      = 0;
     CS_CMD_REQ_LOGIN = 1;
 }
 
 message Login
 {
-    optional uint32 user_id = 1; 
+    uint32 user_id = 1; 
 }
