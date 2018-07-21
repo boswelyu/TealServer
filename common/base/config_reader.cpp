@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include "ConfigReader.h"
+#include "config_reader.h"
 
 
 ConfigReader::ConfigReader() : m_loaded(false)
