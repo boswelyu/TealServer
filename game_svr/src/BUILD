@@ -12,5 +12,6 @@ cc_binary(
 
     deps = [
         '//common/base:base',
+        '#pthread',
     ],
 )

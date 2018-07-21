@@ -2,6 +2,11 @@
 #include "game_server.h"
 #include "config_reader.h"
 
+GameServer::GameServer()
+{
+    
+}
+
 bool GameServer::Init(const char * config)
 {
     if( !LoadConfig(config) )
@@ -40,10 +45,11 @@ bool GameServer::InitNetwork()
     return true;
 }
 
-void GameServer::Start()
+// 游戏主循环
+void GameServer::GameLoop()
 {
     while(true)
     {
-        GameLoop();
+
     }
 }

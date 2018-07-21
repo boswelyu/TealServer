@@ -24,7 +24,7 @@ int main(int argc, char * argv[])
 
     pthread_t iomnTid = IomnStart(IOMN_SOCKET_NAME, IomnMenuEntry);
 
-    gameSvr.Start();
+    gameSvr.GameLoop();
 
     IomnExit(iomnTid);
 }

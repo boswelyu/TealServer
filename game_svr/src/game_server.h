@@ -25,7 +25,7 @@ public:
     virtual ~GameServer() {}
 
     bool Init(const char * config);
-    void Start();
+    void GameLoop();
 
 private:
     GameServer();
@@ -33,8 +33,6 @@ private:
     bool LoadConfig(const char * config);
     bool InitLogger();
     bool InitNetwork();
-
-    void GameLoop();
 
 private:
     GameServerConfig m_config;
