@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 void StartDaemon();
 
