@@ -1,0 +1,6 @@
+.Building.lock
+.sconsign.dblite
+blade-bin
+build64_release
+build64_debug
+*.swp
