@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include <map>
 
 using namespace std;
 
@@ -10,7 +10,7 @@ public:
     ConfigReader();
     ~ConfigReader();
 
-    bool LoadConfig(const char *file, bool ignorecase = true);
+    bool LoadConfig(const char *file);
 
     std::string GetStringValue(const char* name, const char* def = "");
     bool GetBoolValue(const char* name, const bool def = false);

@@ -1,5 +1,5 @@
 #include "ConfigReader.h"
-
+#include <string.h>
 
 ConfigReader::ConfigReader() : m_loaded(false)
 {
