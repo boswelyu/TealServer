@@ -1,4 +1,4 @@
-#include "common.h"
+#include "os_base.h"
 #include "iomn.h"
 #include "game_server.h"
 
@@ -9,7 +9,6 @@
 
 void PrintTopMenuHelp();
 void ProfilerMenu();
-
 
 extern char * g_read_buff;
 extern char * g_dump_buff;
