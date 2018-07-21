@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <string.h>
 
 #include "ConfigReader.h"
@@ -117,7 +118,7 @@ bool ConfigReader::ParseConfig(FILE * fp)
 
     while(fgets(line, sizeof(line), fp))
     {
-        int len = strlen(line);
+        size_t len = strlen(line);
         if(len >= sizeof(line) - 1)
         {
             printf("Line too long in config file\n %s\n", line);
@@ -211,4 +212,14 @@ const char * ConfigReader::FindNode(const char * key)
     }
 
     return iter->second.c_str();
+}
+
+void ConfigReader::PrintLoadedConfig()
+{
+    std::map<std::string, std::string>::iterator iter = m_nodes.begin();
+    while(iter != m_nodes.end())
+    {
+        printf("%s = %s\n", iter->first.c_str(), iter->second.c_str());
+        ++iter;
+    }
 }

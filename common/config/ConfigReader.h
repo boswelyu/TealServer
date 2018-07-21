@@ -26,6 +26,8 @@ private:
 
     const char * FindNode(const char * keyStr);
 
+    void PrintLoadedConfig();
+
 private:
     bool m_loaded;
     std::map<string, string> m_nodes;
