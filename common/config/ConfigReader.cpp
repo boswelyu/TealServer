@@ -1,5 +1,9 @@
-#include "ConfigReader.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include "ConfigReader.h"
+
 
 ConfigReader::ConfigReader() : m_loaded(false)
 {
@@ -97,7 +101,7 @@ unsigned int ConfigReader::GetUIntValue(const char *name, unsigned int def /* = 
 
 float ConfigReader::GetFloatValue(const char* name, float def /* = 0 */)
 {
-    if(!mConf)  return def;
+    if(!m_loaded)  return def;
 
     const char * str = FindNode(name);
     if(str == NULL) return def;
