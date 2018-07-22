@@ -2,6 +2,8 @@
 #define _TEAL_GAME_SERVER_H_
 
 #include <string>
+#include "clock_counter.h"
+#include "network_manager.h"
 
 typedef struct gsConfig
 {
@@ -32,9 +34,13 @@ private:
 
     bool LoadConfig(const char * config);
     bool InitLogger();
+    bool InitClockCounter();
     bool InitNetwork();
 
 private:
     GameServerConfig m_config;
+
+    ClockCounter & m_clockCounter;
+    NetworkManager * m_pNetworkManager;
 };
 #endif

@@ -2,10 +2,10 @@
 #include "game_server.h"
 #include "config_reader.h"
 #include "logger.h"
+#include "client_msg_handler.h"
 
-GameServer::GameServer()
+GameServer::GameServer() : m_clockCounter(ClockCounter::Instance())
 {
-    
 }
 
 bool GameServer::Init(const char * config)
@@ -66,8 +66,32 @@ bool GameServer::InitLogger()
     return true;
 }
 
+bool GameServer::InitClockCounter()
+{
+    
+    return true;
+}
+
 bool GameServer::InitNetwork()
 {
+    m_pNetworkManager = NetworkManager::Create(m_config.MaxAcceptClient, &m_clockCounter);
+    if(m_pNetworkManager == NULL)
+    {
+        LOG_ERROR("GameServer Failed to Create NetworkManager when InitNetwork");
+        return false;
+    }
+
+    ClientMsgHandler &clientMsgHandler = ClientMsgHandler::Instance();
+    int conn = m_pNetworkManager->Listen(m_config.ListenIP.c_str(), m_config.ListenPort.c_str(), &clientMsgHandler);
+    if(conn < 0)
+    {
+        LOG_ERROR("GameServer Failed to Listen on: %s:%s, Error: %s", m_config.ListenIP.c_str(), m_config.ListenPort.c_str(), strerror(errno));
+        return false;
+    }
+
+    //TODO: Set Connection parameters
+
+    printf("GameServer Listening on: %s:%s\n", m_config.ListenIP.c_str(), m_config.ListenPort.c_str());
     return true;
 }
 
