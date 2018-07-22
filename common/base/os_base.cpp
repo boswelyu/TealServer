@@ -1,3 +1,4 @@
+#include "common.h"
 #include "os_base.h"
 
 //后台方式启动服务

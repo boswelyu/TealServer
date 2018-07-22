@@ -3,6 +3,7 @@ cc_library(
     srcs = [
         "os_base.cpp",
         "config_reader.cpp",
+        "logger.cpp",
         "iomn.cpp",
     ],
 )

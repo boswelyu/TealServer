@@ -1,3 +1,4 @@
+#include "common.h"
 #include "os_base.h"
 #include "iomn.h"
 #include "game_server.h"
