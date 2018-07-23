@@ -11,7 +11,7 @@ const char * Logger::LogLevelStr[] =
     "FATAL",
 };
 
-Logger::Logger() : m_fp(NULL)
+Logger::Logger() : m_fp(NULL), m_lastSeccond(0)
 {
     memset(m_currTimeStr, 0, sizeof(m_currTimeStr));
 }
@@ -96,12 +96,15 @@ void Logger::UpdateTimeStr()
     struct timeval tv;
     gettimeofday(&tv, NULL);
 
-    struct tm localTime;
-    localtime_r(&tv.tv_sec, &localTime);
+    if(tv.tv_sec != m_lastSeccond)
+    {
+        localtime_r(&tv.tv_sec, &m_localTime);
+        m_lastSeccond = tv.tv_sec;
+    }
 
     snprintf(m_currTimeStr, sizeof(m_currTimeStr), "%04d-%02d-%02d %02d:%02d:%02d.%06ld",
-        localTime.tm_year + 1900, localTime.tm_mon + 1, localTime.tm_mday, 
-        localTime.tm_hour, localTime.tm_min, localTime.tm_sec, tv.tv_usec);
+        m_localTime.tm_year + 1900, m_localTime.tm_mon + 1, m_localTime.tm_mday, 
+        m_localTime.tm_hour, m_localTime.tm_min, m_localTime.tm_sec, tv.tv_usec);
 }    
 
 void Logger::Print(int logLevel, const char * fmt, ...)

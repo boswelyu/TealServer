@@ -100,5 +100,8 @@ private:
     int  m_logLevel;
     SpinLock   m_locker;
     char m_currTimeStr[32];
+
+    time_t m_lastSeccond;
+    struct tm m_localTime;
 };
 #endif
