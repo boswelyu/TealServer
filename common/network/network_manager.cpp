@@ -32,8 +32,24 @@ NetworkManager::~NetworkManager()
 
 }
 
-hconn_t NetworkManager::Listen(const char * ip, const char * port, SocketHandler * handler)
+int NetworkManager::Listen(const char * ip, const char * port, SocketHandler * handler)
 {
+    ipaddr_t ipaddr = inet_addr(ip);
+    port_t   ipport = htons((port_t)atol(port));
+
+    TealSocket * sock = new TealSocket();
+    sock->SetHandler(handler);
+
+    if(sock->Listen(ip, port) == false)
+    {
+        LOG_ERROR("Listen on %s:%s Failed, Error: %s", ip, port, strerror(errno));
+        delete sock;
+        return -1;
+    }
+
+    int conn = sock->GetSocket();
+    
+
     return 0;
 }
 

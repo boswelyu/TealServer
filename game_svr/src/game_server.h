@@ -34,7 +34,6 @@ private:
 
     bool LoadConfig(const char * config);
     bool InitLogger();
-    bool InitClockCounter();
     bool InitNetwork();
 
 private:

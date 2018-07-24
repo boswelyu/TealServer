@@ -66,12 +66,6 @@ bool GameServer::InitLogger()
     return true;
 }
 
-bool GameServer::InitClockCounter()
-{
-    
-    return true;
-}
-
 bool GameServer::InitNetwork()
 {
     m_pNetworkManager = NetworkManager::Create(m_config.MaxAcceptClient, &m_clockCounter);
@@ -100,6 +94,6 @@ void GameServer::GameLoop()
 {
     while(true)
     {
-
+        m_pNetworkManager->Update();
     }
 }
