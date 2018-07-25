@@ -11,9 +11,12 @@ public:
     EpollSocketListener();
     virtual ~EpollSocketListener();
 
-    virtual bool Init(int maxfd);
+    virtual bool Init(int maxfd, NetworkManager * nm);
+    virtual bool RegisterSocketEvent(TealSocket * socket, int event);
+    virtual void CheckSocketEvents(int timeout);
 
 private:
+    NetworkManager * m_manager;
     int m_maxEvents;
     int m_kdpfd;
     struct epoll_event * m_events;

@@ -12,4 +12,6 @@
 #include <string.h>
 #include <stdarg.h>
 
+#define STDEXT __gun_cxx
+
 #endif
