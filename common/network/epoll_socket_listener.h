@@ -13,6 +13,7 @@ public:
 
     virtual bool Init(int maxfd, NetworkManager * nm);
     virtual bool RegisterSocketEvent(TealSocket * socket, int event);
+    virtual bool UpdateSocketEvent(TealSocket * socket, int eflags);
     virtual void CheckSocketEvents(int timeout);
 
 private:

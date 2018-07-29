@@ -94,6 +94,7 @@ void GameServer::GameLoop()
 {
     while(true)
     {
+        m_clockCounter.Update();
         m_pNetworkManager->Update();
     }
 }

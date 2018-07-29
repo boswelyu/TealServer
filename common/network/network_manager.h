@@ -6,6 +6,7 @@
 #include "teal_socket.h"
 
 #include <unordered_map>
+#include <vector>
 
 typedef int hconn_t;
 
@@ -17,6 +18,7 @@ public:
     virtual ~ISocketListener() {}
     virtual bool Init(int maxfd, NetworkManager * nm) = 0;
     virtual bool RegisterSocketEvent(TealSocket * socket, int event) = 0;
+    virtual bool UpdateSocketEvent(TealSocket * socket, int eflags) = 0;
     virtual void CheckSocketEvents(int timeout) = 0;
 };
 
@@ -32,6 +34,7 @@ public:
 
     virtual void Update();
 
+    void SetClockCounter(ClockCounter * clockCounter) { m_clockCounter = clockCounter; }
     void HandleCloseEvent(TealSocket * socket);
     void HandleAcceptEvent(TealSocket * socket);
     void HandleReadEvent(TealSocket * socket);
@@ -40,15 +43,17 @@ public:
 private:
     NetworkManager();
 
-    void SetClockCounter(ClockCounter * clockCounter)
-    {
-        m_clockCounter = clockCounter;
-    }
-
     void SetSocketListener(ISocketListener * socketListener)
     {
         m_socketListener = socketListener;
     }
+
+    bool AppendNewSocket(TealSocket * sock);
+    void CloseSocket(TealSocket * socket, int reason);
+
+    void ProcessSocketSend();
+    void ProcessSocketClose();
+    void CheckSocketTimeout();
 
 private:
     int m_sequence;
@@ -57,6 +62,10 @@ private:
 
     typedef std::unordered_map<int, TealSocket *> SocketSeqMap; 
     SocketSeqMap m_socketSeqMap;                                 //使用Sequence索引的TealSocket
+
+    typedef std::vector<TealSocket *> SocketVector;
+    SocketVector m_closeSockets;
+    
 };
 
 #endif

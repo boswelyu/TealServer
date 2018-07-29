@@ -70,6 +70,37 @@ bool EpollSocketListener::RegisterSocketEvent(TealSocket * socket, int eflag)
     return true;
 }
 
+bool EpollSocketListener::UpdateSocketEvent(TealSocket * socket, int eflag)
+{
+    if(socket == NULL) return false;
+
+    epoll_event event;
+    memset(&event, 0, sizeof(event));
+    
+    event.events = EPOLLRDHUP;
+    if(eflag & SOCKET_EVENT_ON_READ)
+    {
+        event.events |= EPOLLIN;
+    }
+    if(eflag & SOCKET_EVENT_ON_WRITE)
+    {
+        event.events |= EPOLLOUT;
+    }
+    event.data.ptr = (void *)socket;
+
+    int ret = epoll_ctl(m_kdpfd, EPOLL_CTL_MOD, socket->GetSocketFd(), &event);
+    if(ret < 0 && errno == ENOENT)
+    {
+        //不存在，尝试添加
+        ret = epoll_ctl(m_kdpfd, EPOLL_CTL_ADD, socket->GetSocketFd(), &event);
+        if(ret < 0)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 void EpollSocketListener::CheckSocketEvents(int timeout)
 {
     int nfds = epoll_wait(m_kdpfd, m_events, m_maxEvents, timeout);
@@ -88,7 +119,7 @@ void EpollSocketListener::CheckSocketEvents(int timeout)
         }
 
         int eventFlag = event->events;
-        if( (eventFlag & EPOLLERR) || (eventFlag & EPOLLHUP) )
+        if( eventFlag & (EPOLLERR | EPOLLHUP | EPOLLRDHUP) )
         {
             m_manager->HandleCloseEvent(tealSocket);
             continue;
