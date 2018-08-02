@@ -54,9 +54,10 @@ public:
     static const int ReadEvent = SOCKET_EVENT_ON_READ;
     static const int WriteEvent = SOCKET_EVENT_ON_WRITE;
     static const int ReadWriteEvent = SOCKET_EVENT_ON_READ | SOCKET_EVENT_ON_WRITE;
+    static const long long int SocketGuardValue = 0x444f4f47646f6f67L;
 
 public:
-    TealSocket();
+    TealSocket(int sendCacheSize, int recvCacheSize, int timeout);
     virtual ~TealSocket();
 
     bool Create(int type, int proto);
@@ -79,7 +80,7 @@ public:
     bool GetSocketAddr(struct sockaddr * sa, int &len) const; 
 
 public:
-    static TealSocket * Alloc();
+    static TealSocket * Alloc(int sendCacheSize, int recvCacheSize, int timeout);
     static void Free(TealSocket * sock);
 
     static char * AddrToStr(const struct sockaddr * sa, socklen_t salen);
@@ -91,14 +92,24 @@ private:
 
 private:
 
-    int m_proto;
     int m_sequence;
     int m_socketFd;
     int m_state;
 
     ipaddr_t m_ip;
     port_t   m_port;
-
+    short    m_timeout;     
     SocketHandler * m_handler;
+
+    int m_sendCacheSize;
+    int m_sendDataSize;
+
+    int m_recvCacheSize;
+    int m_recvDataOffset;
+    int m_recvDataSize;
+    int m_placeHolder;
+ 
+    //后续连续的m_sendCacheSize + m_readCacheSize + 两块8字节的Guard Value 字节用作发送和接收缓冲区，发送在前，接收在后
+    char m_buffer[1];
 };
 #endif

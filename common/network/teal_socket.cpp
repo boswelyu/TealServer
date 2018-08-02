@@ -1,5 +1,6 @@
 #include "teal_socket.h"
 #include "logger.h"
+#include <new>
 
 int TealSocket::s_errno = 0;
 const char * TealSocket::s_errorStr[] = 
@@ -9,10 +10,22 @@ const char * TealSocket::s_errorStr[] =
     "Bad Parameter",
 };
 
-TealSocket::TealSocket()
+TealSocket::TealSocket(int sendCacheSize, int recvCacheSize, int timeout)
 {
     m_socketFd = -1;
     m_state = SOCKET_STATE_INVALID;
+
+    m_sendCacheSize = sendCacheSize;
+    m_recvCacheSize = recvCacheSize;
+    m_timeout = timeout;
+
+    m_sendDataSize = 0;
+    m_recvDataOffset = m_sendCacheSize + 8;
+    m_recvDataSize = 0;
+
+    //在发送和接收缓冲的结束分别写入Guard值
+    *((long long int*)(m_buffer + m_sendCacheSize)) = SocketGuardValue;   //goodGOOD的ASCII
+    *((long long int*)(m_buffer + m_recvDataOffset + m_recvCacheSize)) = SocketGuardValue;
 }
 
 TealSocket::~TealSocket()
@@ -99,7 +112,7 @@ TealSocket * TealSocket::Accept()
         return NULL;
     }
 
-    TealSocket * ns = TealSocket::Alloc();
+    TealSocket * ns = TealSocket::Alloc(m_sendCacheSize, m_recvCacheSize, m_timeout);
     if(ns == NULL)
     {
         LOG_ERROR("Alloc new TealSocket Failed with error: %s", TealSocket::Error());
@@ -136,9 +149,29 @@ void TealSocket::SendCache()
 
 /************ Static Function ***********/
 
-TealSocket * TealSocket::Alloc()
+TealSocket * TealSocket::Alloc(int sendCacheSize, int recvCacheSize, int timeout)
 {
-    return new TealSocket();
+    //发送缓冲和接收缓冲的大小都8字节对齐，并在发送缓冲和接收缓冲的后面分别追加8字节的Guard数据
+    int reminder = sendCacheSize % 8;
+    if(reminder != 0)
+    {
+        sendCacheSize += (8 - reminder);
+    }
+    reminder = recvCacheSize % 8;
+    if(reminder != 0)
+    {
+        recvCacheSize += (8 - reminder);
+    }
+    int extraSize = sendCacheSize + recvCacheSize + 16;
+    int memsize = sizeof(TealSocket) - 1 + extraSize;
+    void * memory = malloc(memsize);
+    if(memory == NULL)
+    {
+        s_errno = ESOCK_NO_MEMORY;
+        return NULL;
+    }
+    new (memory) TealSocket(sendCacheSize, recvCacheSize, timeout);
+    return (TealSocket *)memory;
 }
 
 void TealSocket::Free(TealSocket * sock)

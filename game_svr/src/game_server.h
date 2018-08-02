@@ -13,6 +13,10 @@ typedef struct gsConfig
 
     std::string ListenIP;       //ip
     std::string ListenPort;     //端口
+
+    int SendCacheSize;
+    int RecvCacheSize;
+    int Timeout;
     
 }GameServerConfig;
 

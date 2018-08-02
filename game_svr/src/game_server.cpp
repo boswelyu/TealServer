@@ -51,6 +51,10 @@ bool GameServer::LoadConfig(const char * config)
     m_config.ListenIP = reader.GetStringValue("ListenIP");       //ip
     m_config.ListenPort = reader.GetStringValue("ListenPort");     //端口
 
+    m_config.SendCacheSize = reader.GetIntValue("SendCacheSize", 512000);
+    m_config.RecvCacheSize = reader.GetIntValue("RecvCacheSize", 256000);
+    m_config.Timeout = reader.GetIntValue("Timeout", 60);
+
     return true;
 }
 
@@ -76,7 +80,8 @@ bool GameServer::InitNetwork()
     }
 
     ClientMsgHandler &clientMsgHandler = ClientMsgHandler::Instance();
-    int conn = m_pNetworkManager->Listen(m_config.ListenIP.c_str(), m_config.ListenPort.c_str(), &clientMsgHandler);
+    int conn = m_pNetworkManager->Listen(m_config.ListenIP.c_str(), m_config.ListenPort.c_str(), &clientMsgHandler,
+        m_config.SendCacheSize, m_config.RecvCacheSize, m_config.Timeout);
     if(conn < 0)
     {
         LOG_ERROR("GameServer Failed to Listen on: %s:%s, Error: %s", m_config.ListenIP.c_str(), m_config.ListenPort.c_str(), strerror(errno));

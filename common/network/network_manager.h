@@ -30,7 +30,7 @@ public:
     int GetSequenceNum();
     virtual ~NetworkManager();
 
-    hconn_t Listen(const char * ip, const char * port, SocketHandler * handler);
+    hconn_t Listen(const char * ip, const char * port, SocketHandler * handler, int sendCacheSize, int recvCacheSize, int timeout);
 
     virtual void Update();
 

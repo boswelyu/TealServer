@@ -42,12 +42,13 @@ NetworkManager::~NetworkManager()
     m_closeSockets.clear();
 }
 
-int NetworkManager::Listen(const char * ipStr, const char * portStr, SocketHandler * handler)
+int NetworkManager::Listen(const char * ipStr, const char * portStr, SocketHandler * handler, 
+    int sendCacheSize, int recvCacheSize, int timeout)
 {
     ipaddr_t ipaddr = inet_addr(ipStr);
     port_t   port = htons((port_t)atol(portStr));
 
-    TealSocket * sock = TealSocket::Alloc();
+    TealSocket * sock = TealSocket::Alloc(sendCacheSize, recvCacheSize, timeout);
     if(!sock->Create(SOCK_STREAM, IPPROTO_TCP))
     {
         LOG_ERROR("Create Socket Failed, Error: %s", strerror(errno));
