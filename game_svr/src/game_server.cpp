@@ -75,7 +75,7 @@ bool GameServer::InitNetwork()
     m_pNetworkManager = NetworkManager::Create(m_config.MaxAcceptClient, &m_clockCounter);
     if(m_pNetworkManager == NULL)
     {
-        LOG_ERROR("GameServer Failed to Create NetworkManager when InitNetwork");
+        printf("GameServer Failed to Create NetworkManager when InitNetwork\n");
         return false;
     }
 
@@ -84,11 +84,9 @@ bool GameServer::InitNetwork()
         m_config.SendCacheSize, m_config.RecvCacheSize, m_config.Timeout);
     if(conn < 0)
     {
-        LOG_ERROR("GameServer Failed to Listen on: %s:%s, Error: %s", m_config.ListenIP.c_str(), m_config.ListenPort.c_str(), strerror(errno));
+        printf("GameServer Failed to Listen on: %s:%s, Error: %s\n", m_config.ListenIP.c_str(), m_config.ListenPort.c_str(), strerror(errno));
         return false;
     }
-
-    //TODO: Set Connection parameters
 
     printf("GameServer Listening on: %s:%s\n", m_config.ListenIP.c_str(), m_config.ListenPort.c_str());
     return true;

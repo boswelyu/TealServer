@@ -1,5 +1,5 @@
 proto_library(
-    name = "proto",
+    name = "proto_msg",
     srcs = [
         'login.proto',
     ],

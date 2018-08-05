@@ -8,11 +8,14 @@ cc_binary(
     ],
 
     incs = [
+        '../../build64_release/proto',
         '../../common/base',
         '../../common/network',
+        '../../common/extend',
     ],
 
     deps = [
+        '//proto:proto_msg',
         '//common/base:base',
         '//common/network:network',
         '#pthread',

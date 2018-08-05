@@ -1,15 +1,39 @@
 syntax = "proto3";
 
-package login;
+package PB;
 
 //Login Mesage, 1 ~ 1000
 
-enum LoginMsgID{
-    CS_CMD_NONE      = 0;
-    CS_CMD_REQ_LOGIN = 1;
+enum LoginCmdID
+{
+    CS_CMD_NONE      = 0;        //proto3要求enum必须从0开始
+    CS_CMD_REQ_LOGIN = 1;        //登录请求
+    SC_CMD_RES_LOGIN = 2;        //登录回复
 }
 
-message Login
+enum EAccountType
 {
-    uint32 user_id = 1; 
+    E_ACCOUNT_MAIL_PHONE  = 0;        //自注册账号       
+    E_ACCOUNT_WECHAT      = 1;        //微信账号
+    E_ACCOUNT_QQ          = 2;        //QQ账号
+}
+
+//登录请求
+message CSLoginReq
+{
+    EAccountType account_type    = 1;     //账号类型
+    bytes        account_name    = 2;     //账号名称
+}
+
+enum ELoginResult
+{
+    E_LOGIN_SUCCESS = 0;
+    E_LOGIN_FAIL    = 1;
+}
+
+//登录结果
+message SCLoginRes
+{
+    ELoginResult login_result   = 1;       //登录结果
+    uint32       user_id        = 2;       //分配的用户ID
 }

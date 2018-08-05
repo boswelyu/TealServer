@@ -37,6 +37,7 @@ enum SocketCloseReason
     SOCKET_CR_READ_FAIL     = 1,  
     SOCKET_CR_REMOTE_CLOSE  = 2,
     SOCKET_CR_CLOSE_EVENT   = 3,
+    SOCKET_CR_INVALID_PKG   = 4,
 };
 
 enum SocketErrorNo
@@ -54,7 +55,7 @@ public:
     static const int ReadEvent = SOCKET_EVENT_ON_READ;
     static const int WriteEvent = SOCKET_EVENT_ON_WRITE;
     static const int ReadWriteEvent = SOCKET_EVENT_ON_READ | SOCKET_EVENT_ON_WRITE;
-    static const long long int SocketGuardValue = 0x444f4f47646f6f67L;
+    static const long long int SocketGuardValue = 0x5357454e444f4f47L;   //GOODNEWS的ASCII
 
 public:
     TealSocket(int sendCacheSize, int recvCacheSize, int timeout);
@@ -65,19 +66,30 @@ public:
     int  Listen(ipaddr_t ip, port_t port);
     TealSocket * Accept();        //接受新的连接
     int  Receive();               //读取收到的数据
+    int  SendCache();
+    void Close();
 
-    void SendCache();
-
-    void SetSequence(int seq) { m_sequence = seq; }
+    void SetConnMark(int seq) { m_marker = seq; }
     void SetHandler(SocketHandler * handler) { m_handler = handler; }
     void SetRemoteAddr(ipaddr_t ip, port_t port) { m_ip = ip; m_port = port; }
     void SetState(int state) { m_state = state; }
 
-    int  GetSequence() { return m_sequence; }
+    int  GetConnMark() { return m_marker; }
     int  GetSocketFd() { return m_socketFd; }
     SocketHandler * GetHandler() { return m_handler; }
     int  GetState()    { return m_state; }
     bool GetSocketAddr(struct sockaddr * sa, int &len) const; 
+
+    /* 当前缓冲区操作函数 */
+
+    //当前接收缓冲区内容长度
+    int RecvDataBytes()             { return m_recvDataSize; }           
+
+    //当前接收缓冲区内容首地址
+    const char * GetRecvDataPtr()   { return m_buffer + m_recvDataOffset; } 
+    
+    //从接收缓冲区中移除指定长度的内容
+    void RemoveRecvData(int len);  
 
 public:
     static TealSocket * Alloc(int sendCacheSize, int recvCacheSize, int timeout);
@@ -86,15 +98,20 @@ public:
     static char * AddrToStr(const struct sockaddr * sa, socklen_t salen);
     static char * SocketToStr(const TealSocket * sock);
     static const char * Error() { return s_errorStr[s_errno]; }
+
+private:
+    void UpdateRecvTime();
+
 private:
     static int s_errno;
     static const char * s_errorStr[ESOCK_MAX];
 
 private:
-
-    int m_sequence;
+ 
+    int m_marker;                     //数量递增的内部连接标记
     int m_socketFd;
     int m_state;
+    time_t m_activeTime;              //最近一次活动时间
 
     ipaddr_t m_ip;
     port_t   m_port;
@@ -105,11 +122,11 @@ private:
     int m_sendDataSize;
 
     int m_recvCacheSize;
+    int m_recvCacheStart;
     int m_recvDataOffset;
     int m_recvDataSize;
-    int m_placeHolder;
  
     //后续连续的m_sendCacheSize + m_readCacheSize + 两块8字节的Guard Value 字节用作发送和接收缓冲区，发送在前，接收在后
-    char m_buffer[1];
+    char m_buffer[0];
 };
 #endif

@@ -3,11 +3,18 @@
 #include "epoll_socket_listener.h"
 #include "logger.h"
 
-#define NETWORK_SEQUENCE_START 100
+#define NETWORK_SEQUENCE_START 1
 
 NetworkManager * NetworkManager::Create(int maxClient, ClockCounter * clockCounter)
 {
     NetworkManager * nm = new NetworkManager();
+
+    if(clockCounter == NULL)
+    {
+        clockCounter = &ClockCounter::Instance();
+        nm->SetSelfClockCounter(true);
+    }
+    
     nm->SetClockCounter(clockCounter);
     ISocketListener * listener = new EpollSocketListener();
 
@@ -31,6 +38,7 @@ int NetworkManager::GetSequenceNum()
 NetworkManager::NetworkManager()
     : m_clockCounter(NULL)
 {
+    m_selfClockCounter = false;
     m_socketListener = NULL;
     m_sequence = NETWORK_SEQUENCE_START;
 
@@ -58,7 +66,7 @@ int NetworkManager::Listen(const char * ipStr, const char * portStr, SocketHandl
 
     //Socket关闭后可能会被重复使用，使用递增的Sequence来保证数字不重复
     int seq = GetSequenceNum();
-    sock->SetSequence(seq);
+    sock->SetConnMark(seq);
     sock->SetHandler(handler);
 
     int ret = sock->Listen(ipaddr, port);
@@ -71,13 +79,18 @@ int NetworkManager::Listen(const char * ipStr, const char * portStr, SocketHandl
 
     //在Listening socket上监听读事件
     m_socketListener->RegisterSocketEvent(sock, TealSocket::ListenEvent);
-    m_socketSeqMap.insert(std::make_pair(seq, sock));
+    m_socketMarkMap.insert(std::make_pair(seq, sock));
 
     return seq;
 }
 
 void NetworkManager::Update()
 {
+    if(m_selfClockCounter)
+    {
+        m_clockCounter->Update();
+    }
+
     m_socketListener->CheckSocketEvents(1);
 
     ProcessSocketSend();
@@ -96,7 +109,7 @@ void NetworkManager::HandleAcceptEvent(TealSocket * socket)
         return;
     }
 
-    ns->SetSequence(GetSequenceNum());
+    ns->SetConnMark(GetSequenceNum());
 
     if(AppendNewSocket(ns) == false)
     {
@@ -120,6 +133,53 @@ void NetworkManager::HandleReadEvent(TealSocket * socket)
     if(readLen < 0)
     {
         CloseSocket(socket, SOCKET_CR_READ_FAIL);
+        return;
+    }
+
+    if(readLen == 0)
+    {
+        CloseSocket(socket, SOCKET_CR_REMOTE_CLOSE);
+        return;
+    }
+
+    LOG_INFO("Received %d bytes from Addr: %s", readLen, TealSocket::SocketToStr(socket));
+
+    SocketHandler * handler = socket->GetHandler();
+    int pkgHeadLen = handler->GetPkgHeadLen();
+    int maxPkgLen = handler->GetMaxPkgLen();
+
+    while(true)
+    {
+        int cachedBytes = socket->RecvDataBytes();
+        if(cachedBytes < pkgHeadLen)
+        {
+            //数据太少，可能还没收全，继续等
+            LOG_INFO("Package Too short, continue wait more cached");
+            break;
+        }
+
+        const char * readDataPtr = socket->GetRecvDataPtr();
+
+        int pkgLen, cmdId;
+        handler->GetMsgHeadData(readDataPtr, pkgLen, cmdId);
+        if(pkgLen < pkgHeadLen || pkgLen > maxPkgLen)
+        {
+            //收到错误的消息，客户端不地道，关掉它
+            LOG_ERROR("Received Invalid Package From: %s, pkgLen: %d not expected: [%d - %d]", 
+                TealSocket::SocketToStr(socket), pkgLen, pkgHeadLen, maxPkgLen);
+            CloseSocket(socket, SOCKET_CR_INVALID_PKG);
+            return;
+        }
+
+        if(cachedBytes < pkgLen)
+        {
+            //还没收全，继续等
+            LOG_INFO("Cached Bytes: %d, Pkg len: %d, continue wait all pkg data cached", cachedBytes, pkgLen);
+            break;
+        }
+
+        handler->HandleMessage(socket->GetConnMark(), cmdId, readDataPtr + pkgHeadLen, pkgLen - pkgHeadLen);
+        socket->RemoveRecvData(pkgLen);
     }
 }
 
@@ -154,7 +214,7 @@ bool NetworkManager::AppendNewSocket(TealSocket * sock)
     }
 
     //加入到序列号map中
-    m_socketSeqMap.insert(std::make_pair(sock->GetSequence(), sock));
+    m_socketMarkMap.insert(std::make_pair(sock->GetConnMark(), sock));
     return true;
 }
 
@@ -162,8 +222,6 @@ void NetworkManager::CloseSocket(TealSocket * socket, int reason)
 {
     LOG_INFO("Socket %s Closed with reason: %d", TealSocket::SocketToStr(socket), reason);
 
-    socket->SendCache();
-    socket->SetState(SOCKET_STATE_CLOSING);
     m_closeSockets.push_back(socket);
 }
 
@@ -175,7 +233,19 @@ void NetworkManager::ProcessSocketSend()
 
 void NetworkManager::ProcessSocketClose()
 {
+    if(m_closeSockets.size() <= 0) return;
 
+    SocketVector::iterator iter = m_closeSockets.begin();
+    for( ; iter != m_closeSockets.end(); ++iter)
+    {
+        TealSocket * socket = *iter;
+    
+        socket->Close();
+        RemoveFromSocketMap(socket);
+
+        TealSocket::Free(socket);
+    }
+    m_closeSockets.clear();
 }
 
 void NetworkManager::CheckSocketTimeout()
@@ -183,3 +253,28 @@ void NetworkManager::CheckSocketTimeout()
 
 }
 
+void NetworkManager::RemoveFromSocketMap(TealSocket * socket)
+{
+    if(socket == NULL) return;
+
+    int marker = socket->GetConnMark();
+    SocketMarkMap::iterator iter = m_socketMarkMap.find(marker);
+    if(iter != m_socketMarkMap.end())
+    {
+        m_socketMarkMap.erase(iter);
+    }
+}
+
+time_t NetworkManager::GetCurrTimeSec()
+{
+    if(m_clockCounter != NULL)
+    {
+        return m_clockCounter->GetCurrTimeSec();
+    }
+    else
+    {
+        struct timeval currTime;
+        gettimeofday(&currTime, NULL);
+        return currTime.tv_sec;
+    }
+}

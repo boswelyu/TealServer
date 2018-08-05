@@ -1,6 +1,8 @@
 #ifndef _TEAL_CLOCK_COUNTER_H_
 #define _TEAL_CLOCK_COUNTER_H_
 
+#include "common.h"
+
 class ClockCounter
 {
 public:
@@ -13,8 +15,13 @@ public:
 
     void Update();
 
+    time_t GetCurrTimeSec();
+
 private:
     ClockCounter();
+
+private:
+    struct timeval m_currTime;
 };
 
 #endif

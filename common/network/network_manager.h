@@ -35,10 +35,14 @@ public:
     virtual void Update();
 
     void SetClockCounter(ClockCounter * clockCounter) { m_clockCounter = clockCounter; }
+    void SetSelfClockCounter(bool flag) { m_selfClockCounter = flag; }
+
     void HandleCloseEvent(TealSocket * socket);
     void HandleAcceptEvent(TealSocket * socket);
     void HandleReadEvent(TealSocket * socket);
     void HandleWriteEvent(TealSocket * socket);
+
+    time_t GetCurrTimeSec();
 
 private:
     NetworkManager();
@@ -48,20 +52,23 @@ private:
         m_socketListener = socketListener;
     }
 
-    bool AppendNewSocket(TealSocket * sock);
+    bool AppendNewSocket(TealSocket * socket);
     void CloseSocket(TealSocket * socket, int reason);
+    void RemoveFromSocketMap(TealSocket * socket);
 
     void ProcessSocketSend();
     void ProcessSocketClose();
     void CheckSocketTimeout();
 
 private:
-    int m_sequence;
+    int  m_sequence;
+    bool m_selfClockCounter;
+
     ClockCounter * m_clockCounter;
     ISocketListener * m_socketListener;
 
-    typedef std::unordered_map<int, TealSocket *> SocketSeqMap; 
-    SocketSeqMap m_socketSeqMap;                                 //使用Sequence索引的TealSocket
+    typedef std::unordered_map<int, TealSocket *> SocketMarkMap; 
+    SocketMarkMap m_socketMarkMap;                                 //使用内部标记索引的TealSocket
 
     typedef std::vector<TealSocket *> SocketVector;
     SocketVector m_closeSockets;
